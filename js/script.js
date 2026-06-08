@@ -610,4 +610,298 @@ svg.selectAll(".cancelDot")
     }
    );
 
+    // =====================================
+// TOP 10 GUEST COUNTRIES
+// =====================================
+
+function drawCountryChart(data){
+
+d3.select("#countryChart")
+  .html("");
+
+const margin = {
+
+    top:40,
+    right:30,
+    bottom:80,
+    left:70
+
+};
+
+const width =
+900 -
+margin.left -
+margin.right;
+
+const height =
+450 -
+margin.top -
+margin.bottom;
+
+const svg =
+
+d3.select("#countryChart")
+  .append("svg")
+  .attr(
+    "viewBox",
+    "0 0 900 450"
+  )
+  .append("g")
+  .attr(
+    "transform",
+    `translate(${margin.left},${margin.top})`
+  );
+
+// TOP 10 COUNTRY
+
+const countryData =
+
+d3.rollups(
+
+    data,
+
+    v => v.length,
+
+    d => d.country
+
+)
+
+.sort(
+    (a,b) =>
+    b[1] - a[1]
+)
+
+.slice(0,10);
+
+const x =
+
+d3.scaleBand()
+
+  .domain(
+
+    countryData.map(
+        d => d[0]
+    )
+
+  )
+
+  .range([0,width])
+
+  .padding(0.2);
+
+const y =
+
+d3.scaleLinear()
+
+  .domain([
+
+    0,
+
+    d3.max(
+        countryData,
+        d => d[1]
+    )
+
+  ])
+
+  .nice()
+
+  .range([height,0]);
+
+// X AXIS
+
+svg.append("g")
+
+   .attr(
+    "transform",
+    `translate(0,${height})`
+   )
+
+   .call(
+    d3.axisBottom(x)
+   )
+
+   .selectAll("text")
+
+   .attr(
+    "transform",
+    "rotate(-30)"
+   )
+
+   .style(
+    "text-anchor",
+    "end"
+   );
+
+// Y AXIS
+
+svg.append("g")
+
+   .call(
+    d3.axisLeft(y)
+   );
+
+// BAR
+
+svg.selectAll("rect")
+
+   .data(countryData)
+
+   .enter()
+
+   .append("rect")
+
+   .attr(
+    "x",
+    d => x(d[0])
+   )
+
+   .attr(
+    "y",
+    d => y(d[1])
+   )
+
+   .attr(
+    "width",
+    x.bandwidth()
+   )
+
+   .attr(
+    "height",
+    d => height - y(d[1])
+   )
+
+   .attr(
+    "fill",
+    "#2563eb"
+   )
+
+   .attr(
+    "rx",
+    5
+   )
+
+   .on(
+    "mouseover",
+    function(event,d){
+
+        tooltip
+
+        .style(
+            "opacity",
+            1
+        )
+
+        .html(`
+
+            <b>${d[0]}</b>
+            <br>
+            Bookings:
+            ${d[1]}
+
+        `)
+
+        .style(
+            "left",
+            event.pageX + 15 + "px"
+        )
+
+        .style(
+            "top",
+            event.pageY - 20 + "px"
+        );
+
+    }
+   )
+
+   .on(
+    "mouseout",
+    () => {
+
+        tooltip
+        .style(
+            "opacity",
+            0
+        );
+
+    }
+   );
+
+// VALUE LABEL
+
+svg.selectAll(".value")
+
+   .data(countryData)
+
+   .enter()
+
+   .append("text")
+
+   .attr(
+    "x",
+    d =>
+    x(d[0]) +
+    x.bandwidth()/2
+   )
+
+   .attr(
+    "y",
+    d =>
+    y(d[1]) - 8
+   )
+
+   .attr(
+    "text-anchor",
+    "middle"
+   )
+
+   .style(
+    "font-size",
+    "11px"
+   )
+
+   .style(
+    "font-weight",
+    "600"
+   )
+
+   .text(
+    d => d[1]
+   );
+
+// TITLE
+
+svg.append("text")
+
+   .attr(
+    "x",
+    width / 2
+   )
+
+   .attr(
+    "y",
+    -15
+   )
+
+   .attr(
+    "text-anchor",
+    "middle"
+   )
+
+   .style(
+    "font-size",
+    "18px"
+   )
+
+   .style(
+    "font-weight",
+    "bold"
+   )
+
+   .text(
+    "Top 10 Guest Countries"
+   );
+
+}
+
 }
