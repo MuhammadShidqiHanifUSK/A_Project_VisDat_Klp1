@@ -11,7 +11,7 @@ const tooltip = d3.select("#tooltip");
 // LOAD CSV
 // =========================
 
-d3.csv("../data/processed/hotel_bookings_preprocessed.csv")
+d3.csv("../../data/processed/hotel_bookings_preprocessed.csv")
   .then((data) => {
     data.forEach((d) => {
       d.is_canceled = +d.is_canceled;
