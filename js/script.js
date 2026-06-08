@@ -905,3 +905,504 @@ svg.append("text")
 }
 
 }
+
+// =====================================
+// MARKET SEGMENT ANALYSIS
+// =====================================
+
+function drawMarketChart(data){
+
+    d3.select("#marketChart").html("");
+
+    const segments = [
+        "Aviation",
+        "Complementary",
+        "Corporate",
+        "Direct",
+        "Groups",
+        "Offline TA/TO",
+        "Online TA"
+    ];
+
+    const chartData = segments.map(segment => {
+
+        const column = `market_segment_${segment}`;
+
+        const segmentRows = data.filter(
+            d => String(d[column]).toLowerCase() === "true"
+        );
+
+        const canceled = segmentRows.filter(
+            d => d.is_canceled == 1
+        ).length;
+
+        const notCanceled = segmentRows.filter(
+            d => d.is_canceled == 0
+        ).length;
+
+        return {
+            segment,
+            canceled,
+            notCanceled,
+            total: canceled + notCanceled
+        };
+
+    });
+
+    const margin = {
+        top: 20,
+        right: 80,
+        bottom: 50,
+        left: 150
+    };
+
+    const width = 800 - margin.left - margin.right;
+    const height = 450 - margin.top - margin.bottom;
+
+    const svg = d3.select("#marketChart")
+        .append("svg")
+        .attr("viewBox", "0 0 800 450")
+        .append("g")
+        .attr(
+            "transform",
+            `translate(${margin.left},${margin.top})`
+        );
+
+    const x = d3.scaleLinear()
+        .domain([
+            0,
+            d3.max(chartData, d => d.total)
+        ])
+        .nice()
+        .range([0, width]);
+
+    const y = d3.scaleBand()
+        .domain(chartData.map(d => d.segment))
+        .range([0, height])
+        .padding(0.2);
+
+    // Axis
+
+    svg.append("g")
+        .call(d3.axisLeft(y));
+
+    svg.append("g")
+        .attr(
+            "transform",
+            `translate(0,${height})`
+        )
+        .call(d3.axisBottom(x));
+
+    // Not Canceled (Biru)
+
+    svg.selectAll(".notCanceled")
+        .data(chartData)
+        .enter()
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", d => y(d.segment))
+        .attr("height", y.bandwidth())
+        .attr("width", d => x(d.notCanceled))
+        .attr("fill", "#2563eb")
+        .on("mouseover", function(event, d){
+
+            tooltip
+                .style("opacity", 1)
+                .html(`
+                    <b>${d.segment}</b><br>
+                    Not Canceled: ${d.notCanceled}<br>
+                    Canceled: ${d.canceled}<br>
+                    Total: ${d.total}
+                `)
+                .style("left", event.pageX + 15 + "px")
+                .style("top", event.pageY - 20 + "px");
+
+        })
+        .on("mouseout", () =>
+            tooltip.style("opacity", 0)
+        );
+
+    // Canceled (Oranye)
+
+    svg.selectAll(".canceled")
+        .data(chartData)
+        .enter()
+        .append("rect")
+        .attr("x", d => x(d.notCanceled))
+        .attr("y", d => y(d.segment))
+        .attr("height", y.bandwidth())
+        .attr("width", d => x(d.canceled))
+        .attr("fill", "#f97316")
+        .on("mouseover", function(event, d){
+
+            tooltip
+                .style("opacity", 1)
+                .html(`
+                    <b>${d.segment}</b><br>
+                    Not Canceled: ${d.notCanceled}<br>
+                    Canceled: ${d.canceled}<br>
+                    Total: ${d.total}
+                `)
+                .style("left", event.pageX + 15 + "px")
+                .style("top", event.pageY - 20 + "px");
+
+        })
+        .on("mouseout", () =>
+            tooltip.style("opacity", 0)
+        );
+
+    // Label Total
+
+    svg.selectAll(".totalLabel")
+        .data(chartData)
+        .enter()
+        .append("text")
+        .attr("x", d => x(d.total) + 5)
+        .attr("y", d => y(d.segment) + y.bandwidth()/2 + 4)
+        .style("font-size", "11px")
+        .style("font-weight", "600")
+        .text(d => d.total);
+
+}
+
+// =====================================
+// ADR vs LEAD TIME SCATTER PLOT
+// =====================================
+
+function drawScatterPlot(data){
+
+    d3.select("#scatterChart").html("");
+
+    if(data.length === 0){
+
+        d3.select("#scatterChart")
+            .append("p")
+            .style("text-align","center")
+            .style("padding","50px")
+            .text("No data available");
+
+        return;
+    }
+
+    const margin = {
+        top: 20,
+        right: 20,
+        bottom: 60,
+        left: 70
+    };
+
+    const width =
+        1000 -
+        margin.left -
+        margin.right;
+
+    const height =
+        520 -
+        margin.top -
+        margin.bottom;
+
+    const svg = d3.select("#scatterChart")
+        .append("svg")
+        .attr("viewBox","0 0 1000 520")
+        .append("g")
+        .attr(
+            "transform",
+            `translate(${margin.left},${margin.top})`
+        );
+
+    // Debug jumlah hotel
+    console.log(
+        "Hotel Distribution:",
+        d3.rollup(
+            data,
+            v => v.length,
+            d => d.hotel
+        )
+    );
+
+    // X Scale
+    const x = d3.scaleLinear()
+        .domain([
+            0,
+            d3.max(
+                data,
+                d => d.lead_time
+            )
+        ])
+        .nice()
+        .range([0,width]);
+
+    // Y Scale
+    const y = d3.scaleLinear()
+        .domain([
+            0,
+            d3.max(
+                data,
+                d => d.adr
+            )
+        ])
+        .nice()
+        .range([height,0]);
+
+    // X Axis
+    svg.append("g")
+        .attr(
+            "transform",
+            `translate(0,${height})`
+        )
+        .call(
+            d3.axisBottom(x)
+        );
+
+    // Y Axis
+    svg.append("g")
+        .call(
+            d3.axisLeft(y)
+        );
+
+    // X Label
+    svg.append("text")
+        .attr(
+            "x",
+            width / 2
+        )
+        .attr(
+            "y",
+            height + 45
+        )
+        .attr(
+            "text-anchor",
+            "middle"
+        )
+        .style(
+            "font-size",
+            "14px"
+        )
+        .style(
+            "font-weight",
+            "600"
+        )
+        .text("Lead Time");
+
+    // Y Label
+    svg.append("text")
+        .attr(
+            "transform",
+            "rotate(-90)"
+        )
+        .attr(
+            "x",
+            -height / 2
+        )
+        .attr(
+            "y",
+            -50
+        )
+        .attr(
+            "text-anchor",
+            "middle"
+        )
+        .style(
+            "font-size",
+            "14px"
+        )
+        .style(
+            "font-weight",
+            "600"
+        )
+        .text("ADR");
+
+    // =====================
+    // POINTS
+    // =====================
+
+    svg.selectAll(".point")
+        .data(data)
+        .enter()
+        .append("path")
+        .attr("class","point")
+
+        .attr(
+            "transform",
+            d =>
+            `translate(
+                ${x(d.lead_time)},
+                ${y(d.adr)}
+            )`
+        )
+
+        .attr("d", d => {
+
+            const hotel =
+                String(d.hotel).trim();
+
+            // Resort Hotel = Kotak
+            if(
+                hotel ===
+                "Resort Hotel"
+            ){
+
+                return d3.symbol()
+                    .type(
+                        d3.symbolSquare
+                    )
+                    .size(25)();
+
+            }
+
+            // City Hotel = Lingkaran
+            return d3.symbol()
+                .type(
+                    d3.symbolCircle
+                )
+                .size(25)();
+
+        })
+
+        .attr(
+            "fill",
+            d =>
+            d.is_canceled === 1
+            ? "#ef4444"
+            : "#2563eb"
+        )
+
+        .attr(
+            "opacity",
+            0.45
+        )
+
+        .on(
+            "mouseover",
+            function(event,d){
+
+                tooltip
+                    .style(
+                        "opacity",
+                        1
+                    )
+                    .html(`
+                        <b>${d.hotel}</b><br>
+                        Lead Time:
+                        ${d.lead_time.toFixed(2)}<br>
+                        ADR:
+                        ${d.adr.toFixed(2)}<br>
+                        Status:
+                        ${
+                            d.is_canceled === 1
+                            ? "Canceled"
+                            : "Successful"
+                        }
+                    `)
+
+                    .style(
+                        "left",
+                        event.pageX + 15 + "px"
+                    )
+
+                    .style(
+                        "top",
+                        event.pageY - 20 + "px"
+                    );
+
+            }
+        )
+
+        .on(
+            "mouseout",
+            () => {
+
+                tooltip
+                    .style(
+                        "opacity",
+                        0
+                    );
+
+            }
+        );
+
+}
+
+function updateInsights(data){
+
+    if(data.length === 0){
+
+        d3.select("#insights")
+            .html("<p>No data available.</p>");
+
+        return;
+    }
+
+    // Total booking
+    const totalBookings = data.length;
+
+    // Cancellation rate
+    const canceled =
+        data.filter(d => d.is_canceled === 1).length;
+
+    const cancelRate =
+        ((canceled / totalBookings) * 100).toFixed(1);
+
+    // Average ADR
+    const avgADR =
+        d3.mean(data,d => d.adr).toFixed(2);
+
+    // Average Lead Time
+    const avgLead =
+        d3.mean(data,d => d.lead_time).toFixed(2);
+
+    // Top Country
+    const topCountry =
+        d3.rollups(
+            data,
+            v => v.length,
+            d => d.country
+        )
+        .sort((a,b) => b[1]-a[1])[0];
+
+    // Hotel Type Dominan
+    const topHotel =
+        d3.rollups(
+            data,
+            v => v.length,
+            d => d.hotel
+        )
+        .sort((a,b) => b[1]-a[1])[0];
+
+    d3.select("#insights").html(`
+        <h3>Dashboard Insights</h3>
+        <ul>
+            <li>
+                Total bookings:
+                <b>${totalBookings.toLocaleString()}</b>
+            </li>
+
+            <li>
+                Cancellation rate:
+                <b>${cancelRate}%</b>
+            </li>
+
+            <li>
+                Average ADR:
+                <b>${avgADR}</b>
+            </li>
+
+            <li>
+                Average Lead Time:
+                <b>${avgLead}</b>
+            </li>
+
+            <li>
+                Top guest country:
+                <b>${topCountry[0]}</b>
+                (${topCountry[1]} bookings)
+            </li>
+
+            <li>
+                Dominant hotel type:
+                <b>${topHotel[0]}</b>
+            </li>
+        </ul>
+    `);
+
+}
