@@ -11,16 +11,13 @@ const tooltip = d3.select("#tooltip");
 // LOAD CSV
 // =========================
 
-d3.csv("data/hotel_bookings_preprocessed.csv")
-.then(data => {
-
-    data.forEach(d => {
-
-        d.is_canceled = +d.is_canceled;
-        d.lead_time = +d.lead_time;
-        d.adr = +d.adr;
-        d.arrival_date_year = +d.arrival_date_year;
-
+d3.csv("../data/processed/hotel_bookings_preprocessed.csv")
+  .then((data) => {
+    data.forEach((d) => {
+      d.is_canceled = +d.is_canceled;
+      d.lead_time = +d.lead_time;
+      d.adr = +d.adr;
+      d.arrival_date_year = +d.arrival_date_year;
     });
 
     originalData = data;
@@ -28,266 +25,175 @@ d3.csv("data/hotel_bookings_preprocessed.csv")
 
     initializeFilters();
     updateDashboard();
-
-})
-.catch(error => {
-
+  })
+  .catch((error) => {
     console.error(error);
-
-});
+  });
 
 // =========================
 // FILTER EVENTS
 // =========================
 
-function initializeFilters(){
+function initializeFilters() {
+  d3.select("#hotelFilter").on("change", applyFilters);
 
-    d3.select("#hotelFilter")
-        .on("change", applyFilters);
+  d3.select("#yearFilter").on("change", applyFilters);
 
-    d3.select("#yearFilter")
-        .on("change", applyFilters);
+  d3.select("#statusFilter").on("change", applyFilters);
 
-    d3.select("#statusFilter")
-        .on("change", applyFilters);
+  d3.select("#segmentFilter").on("change", applyFilters);
 
-    d3.select("#segmentFilter")
-        .on("change", applyFilters);
+  d3.select("#depositFilter").on("change", applyFilters);
 
-    d3.select("#depositFilter")
-        .on("change", applyFilters);
-
-    d3.select("#resetBtn")
-        .on("click", resetFilters);
-
+  d3.select("#resetBtn").on("click", resetFilters);
 }
 
 // =========================
 // RESET FILTERS
 // =========================
 
-function resetFilters(){
+function resetFilters() {
+  d3.select("#hotelFilter").property("value", "All");
 
-    d3.select("#hotelFilter")
-        .property("value","All");
+  d3.select("#yearFilter").property("value", "All");
 
-    d3.select("#yearFilter")
-        .property("value","All");
+  d3.select("#statusFilter").property("value", "All");
 
-    d3.select("#statusFilter")
-        .property("value","All");
+  d3.select("#segmentFilter").property("value", "All");
 
-    d3.select("#segmentFilter")
-        .property("value","All");
+  d3.select("#depositFilter").property("value", "All");
 
-    d3.select("#depositFilter")
-        .property("value","All");
+  filteredData = originalData;
 
-    filteredData = originalData;
-
-    updateDashboard();
-
+  updateDashboard();
 }
 
 // =========================
 // APPLY FILTERS
 // =========================
 
-function applyFilters(){
+function applyFilters() {
+  const hotel = d3.select("#hotelFilter").property("value");
 
-    const hotel =
-        d3.select("#hotelFilter")
-        .property("value");
+  const year = d3.select("#yearFilter").property("value");
 
-    const year =
-        d3.select("#yearFilter")
-        .property("value");
+  const status = d3.select("#statusFilter").property("value");
 
-    const status =
-        d3.select("#statusFilter")
-        .property("value");
+  const segment = d3.select("#segmentFilter").property("value");
 
-    const segment =
-        d3.select("#segmentFilter")
-        .property("value");
+  const deposit = d3.select("#depositFilter").property("value");
 
-    const deposit =
-        d3.select("#depositFilter")
-        .property("value");
+  filteredData = originalData.filter((d) => {
+    const hotelMatch = hotel === "All" || d.hotel === hotel;
 
-    filteredData = originalData.filter(d => {
+    const yearMatch = year === "All" || +d.arrival_date_year === +year;
 
-        const hotelMatch =
-            hotel === "All" ||
-            d.hotel === hotel;
+    const statusMatch = status === "All" || d.reservation_status === status;
 
-        const yearMatch =
-            year === "All" ||
-            +d.arrival_date_year === +year;
+    // =====================
+    // MARKET SEGMENT
+    // =====================
 
-        const statusMatch =
-            status === "All" ||
-            d.reservation_status === status;
+    let segmentMatch = true;
 
-        // =====================
-        // MARKET SEGMENT
-        // =====================
+    if (segment !== "All") {
+      const segmentColumn = `market_segment_${segment}`;
 
-        let segmentMatch = true;
+      segmentMatch = String(d[segmentColumn]).toLowerCase() === "true";
+    }
 
-        if(segment !== "All"){
+    // =====================
+    // DEPOSIT TYPE
+    // =====================
 
-            const segmentColumn =
-                `market_segment_${segment}`;
+    let depositMatch = true;
 
-            segmentMatch =
-                String(
-                    d[segmentColumn]
-                ).toLowerCase() === "true";
-        }
+    if (deposit !== "All") {
+      const depositColumn = `deposit_type_${deposit}`;
 
-        // =====================
-        // DEPOSIT TYPE
-        // =====================
+      depositMatch = String(d[depositColumn]).toLowerCase() === "true";
+    }
 
-        let depositMatch = true;
-
-        if(deposit !== "All"){
-
-            const depositColumn =
-                `deposit_type_${deposit}`;
-
-            depositMatch =
-                String(
-                    d[depositColumn]
-                ).toLowerCase() === "true";
-        }
-
-        return (
-            hotelMatch &&
-            yearMatch &&
-            statusMatch &&
-            segmentMatch &&
-            depositMatch
-        );
-
-    });
-
-    console.log(
-        "Filtered Rows:",
-        filteredData.length
+    return (
+      hotelMatch && yearMatch && statusMatch && segmentMatch && depositMatch
     );
+  });
 
-    updateDashboard();
+  console.log("Filtered Rows:", filteredData.length);
 
+  updateDashboard();
 }
 
 // =========================
 // UPDATE DASHBOARD
 // =========================
 
-function updateDashboard(){
+function updateDashboard() {
+  updateKPIs(filteredData);
 
-    updateKPIs(filteredData);
+  drawLineChart(filteredData);
 
-    drawLineChart(filteredData);
+  drawCountryChart(filteredData);
 
-    drawCountryChart(filteredData);
+  drawMarketChart(filteredData);
 
-    drawMarketChart(filteredData);
+  drawScatterPlot(filteredData);
 
-    drawScatterPlot(filteredData);
-
-    updateInsights(filteredData);
-
+  updateInsights(filteredData);
 }
 
 // =========================
 // KPI
 // =========================
 
-function updateKPIs(data){
+function updateKPIs(data) {
+  const totalBookings = data.length;
 
-    const totalBookings =
-        data.length;
+  const canceled = data.filter((d) => d.is_canceled === 1).length;
 
-    const canceled =
-        data.filter(
-            d => d.is_canceled === 1
-        ).length;
+  const cancelRate = totalBookings
+    ? ((canceled / totalBookings) * 100).toFixed(2)
+    : 0;
 
-    const cancelRate =
-        totalBookings
-        ? ((canceled / totalBookings) * 100)
-            .toFixed(2)
-        : 0;
+  const avgADR = d3.mean(data, (d) => d.adr) || 0;
 
-    const avgADR =
-        d3.mean(data, d => d.adr) || 0;
+  const avgLead = d3.mean(data, (d) => d.lead_time) || 0;
 
-    const avgLead =
-        d3.mean(data, d => d.lead_time) || 0;
+  d3.select("#totalBookings").text(d3.format(",")(totalBookings));
 
-    d3.select("#totalBookings")
-        .text(
-            d3.format(",")(totalBookings)
-        );
+  d3.select("#cancelRate").text(cancelRate + "%");
 
-    d3.select("#cancelRate")
-        .text(cancelRate + "%");
+  d3.select("#avgADR").text(avgADR.toFixed(2));
 
-    d3.select("#avgADR")
-        .text(avgADR.toFixed(2));
-
-    d3.select("#avgLead")
-        .text(avgLead.toFixed(2));
-
+  d3.select("#avgLead").text(avgLead.toFixed(2));
 }
 
 // =====================================
 // LINE CHART
 // =====================================
 
-function drawLineChart(data){
+function drawLineChart(data) {
+  d3.select("#lineChart").html("");
 
-d3.select("#lineChart")
-  .html("");
+  const margin = {
+    top: 40,
+    right: 40,
+    bottom: 60,
+    left: 70,
+  };
 
-const margin = {
+  const width = 1000 - margin.left - margin.right;
 
-    top:40,
-    right:40,
-    bottom:60,
-    left:70
+  const height = 450 - margin.top - margin.bottom;
 
-};
+  const svg = d3
+    .select("#lineChart")
+    .append("svg")
+    .attr("viewBox", "0 0 1000 450")
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
 
-const width =
-1000 -
-margin.left -
-margin.right;
-
-const height =
-450 -
-margin.top -
-margin.bottom;
-
-const svg =
-
-d3.select("#lineChart")
-  .append("svg")
-  .attr(
-    "viewBox",
-    "0 0 1000 450"
-  )
-  .append("g")
-  .attr(
-    "transform",
-    `translate(${margin.left},${margin.top})`
-  );
-
-const monthOrder = [
-
+  const monthOrder = [
     "January",
     "February",
     "March",
@@ -299,1077 +205,685 @@ const monthOrder = [
     "September",
     "October",
     "November",
-    "December"
+    "December",
+  ];
 
-];
-
-const monthlyData =
-
-monthOrder.map(month => {
-
-    const rows =
-
-    data.filter(
-
-        d =>
-        d.arrival_date_month ===
-        month
-
-    );
+  const monthlyData = monthOrder.map((month) => {
+    const rows = data.filter((d) => d.arrival_date_month === month);
 
     return {
+      month: month,
 
-        month:month,
+      bookings: rows.length,
 
-        bookings:
-        rows.length,
-
-        canceled:
-        rows.filter(
-            d =>
-            d.is_canceled === 1
-        ).length
-
+      canceled: rows.filter((d) => d.is_canceled === 1).length,
     };
+  });
 
-});
+  const x = d3
+    .scalePoint()
 
-const x =
+    .domain(monthOrder)
 
-d3.scalePoint()
+    .range([0, width]);
 
-  .domain(monthOrder)
+  const y = d3
+    .scaleLinear()
 
-  .range([0,width]);
+    .domain([0, d3.max(monthlyData, (d) => Math.max(d.bookings, d.canceled))])
 
-const y =
+    .nice()
 
-d3.scaleLinear()
+    .range([height, 0]);
 
-  .domain([
+  svg
+    .append("g")
 
-    0,
+    .attr("transform", `translate(0,${height})`)
 
-    d3.max(
-        monthlyData,
-        d =>
-        Math.max(
-            d.bookings,
-            d.canceled
-        )
-    )
+    .call(d3.axisBottom(x));
 
-  ])
+  svg
+    .append("g")
 
-  .nice()
+    .call(d3.axisLeft(y));
 
-  .range([height,0]);
+  const bookingLine = d3
+    .line()
 
-svg.append("g")
+    .x((d) => x(d.month))
 
-   .attr(
-    "transform",
-    `translate(0,${height})`
-   )
+    .y((d) => y(d.bookings));
 
-   .call(
-    d3.axisBottom(x)
-   );
+  const cancelLine = d3
+    .line()
 
-svg.append("g")
+    .x((d) => x(d.month))
 
-   .call(
-    d3.axisLeft(y)
-   );
+    .y((d) => y(d.canceled));
 
-const bookingLine =
+  // BOOKING LINE
 
-d3.line()
+  svg
+    .append("path")
 
-  .x(
-    d => x(d.month)
-  )
+    .datum(monthlyData)
 
-  .y(
-    d => y(d.bookings)
-  );
+    .attr("fill", "none")
 
-const cancelLine =
+    .attr("stroke", "#2563eb")
 
-d3.line()
+    .attr("stroke-width", 3)
 
-  .x(
-    d => x(d.month)
-  )
+    .attr("d", bookingLine);
 
-  .y(
-    d => y(d.canceled)
-  );
+  // CANCEL LINE
 
-// BOOKING LINE
+  svg
+    .append("path")
 
-svg.append("path")
+    .datum(monthlyData)
 
-   .datum(monthlyData)
+    .attr("fill", "none")
 
-   .attr(
-    "fill",
-    "none"
-   )
+    .attr("stroke", "#ef4444")
 
-   .attr(
-    "stroke",
-    "#2563eb"
-   )
+    .attr("stroke-width", 3)
 
-   .attr(
-    "stroke-width",
-    3
-   )
+    .attr("d", cancelLine);
 
-   .attr(
-    "d",
-    bookingLine
-   );
+  // BLUE POINTS
 
-// CANCEL LINE
+  svg
+    .selectAll(".bookingDot")
 
-svg.append("path")
+    .data(monthlyData)
 
-   .datum(monthlyData)
+    .enter()
 
-   .attr(
-    "fill",
-    "none"
-   )
+    .append("circle")
 
-   .attr(
-    "stroke",
-    "#ef4444"
-   )
+    .attr("cx", (d) => x(d.month))
 
-   .attr(
-    "stroke-width",
-    3
-   )
+    .attr("cy", (d) => y(d.bookings))
 
-   .attr(
-    "d",
-    cancelLine
-   );
+    .attr("r", 5)
 
-// BLUE POINTS
+    .attr("fill", "#2563eb")
 
-svg.selectAll(".bookingDot")
+    .on("mouseover", function (event, d) {
+      tooltip
 
-   .data(monthlyData)
+        .style("opacity", 1)
 
-   .enter()
-
-   .append("circle")
-
-   .attr(
-    "cx",
-    d => x(d.month)
-   )
-
-   .attr(
-    "cy",
-    d => y(d.bookings)
-   )
-
-   .attr(
-    "r",
-    5
-   )
-
-   .attr(
-    "fill",
-    "#2563eb"
-   )
-
-   .on(
-    "mouseover",
-    function(event,d){
-
-        tooltip
-
-        .style(
-            "opacity",
-            1
-        )
-
-        .html(`
+        .html(
+          `
 
             <b>${d.month}</b>
             <br>
             Bookings:
             ${d.bookings}
 
-        `)
-
-        .style(
-            "left",
-            event.pageX + 15 + "px"
+        `,
         )
 
-        .style(
-            "top",
-            event.pageY - 20 + "px"
-        );
+        .style("left", event.pageX + 15 + "px")
 
-    }
-   )
+        .style("top", event.pageY - 20 + "px");
+    })
 
-   .on(
-    "mouseout",
-    () => {
+    .on("mouseout", () => {
+      tooltip.style("opacity", 0);
+    });
 
-        tooltip
-        .style(
-            "opacity",
-            0
-        );
+  // RED POINTS
 
-    }
-   );
+  svg
+    .selectAll(".cancelDot")
 
-// RED POINTS
+    .data(monthlyData)
 
-svg.selectAll(".cancelDot")
+    .enter()
 
-   .data(monthlyData)
+    .append("circle")
 
-   .enter()
+    .attr("cx", (d) => x(d.month))
 
-   .append("circle")
+    .attr("cy", (d) => y(d.canceled))
 
-   .attr(
-    "cx",
-    d => x(d.month)
-   )
+    .attr("r", 5)
 
-   .attr(
-    "cy",
-    d => y(d.canceled)
-   )
+    .attr("fill", "#ef4444")
 
-   .attr(
-    "r",
-    5
-   )
+    .on("mouseover", function (event, d) {
+      tooltip
 
-   .attr(
-    "fill",
-    "#ef4444"
-   )
+        .style("opacity", 1)
 
-   .on(
-    "mouseover",
-    function(event,d){
-
-        tooltip
-
-        .style(
-            "opacity",
-            1
-        )
-
-        .html(`
+        .html(
+          `
 
             <b>${d.month}</b>
             <br>
             Cancelled:
             ${d.canceled}
 
-        `)
-
-        .style(
-            "left",
-            event.pageX + 15 + "px"
+        `,
         )
 
-        .style(
-            "top",
-            event.pageY - 20 + "px"
-        );
+        .style("left", event.pageX + 15 + "px")
 
-    }
-   )
+        .style("top", event.pageY - 20 + "px");
+    })
 
-   .on(
-    "mouseout",
-    () => {
+    .on("mouseout", () => {
+      tooltip.style("opacity", 0);
+    });
 
-        tooltip
-        .style(
-            "opacity",
-            0
-        );
+  // =====================================
+  // TOP 10 GUEST COUNTRIES
+  // =====================================
 
-    }
-   );
+  function drawCountryChart(data) {
+    d3.select("#countryChart").html("");
 
-    // =====================================
-// TOP 10 GUEST COUNTRIES
-// =====================================
+    const margin = {
+      top: 40,
+      right: 30,
+      bottom: 80,
+      left: 70,
+    };
 
-function drawCountryChart(data){
+    const width = 900 - margin.left - margin.right;
 
-d3.select("#countryChart")
-  .html("");
+    const height = 450 - margin.top - margin.bottom;
 
-const margin = {
+    const svg = d3
+      .select("#countryChart")
+      .append("svg")
+      .attr("viewBox", "0 0 900 450")
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    top:40,
-    right:30,
-    bottom:80,
-    left:70
+    // TOP 10 COUNTRY
 
-};
+    const countryData = d3
+      .rollups(
+        data,
 
-const width =
-900 -
-margin.left -
-margin.right;
+        (v) => v.length,
 
-const height =
-450 -
-margin.top -
-margin.bottom;
+        (d) => d.country,
+      )
 
-const svg =
+      .sort((a, b) => b[1] - a[1])
 
-d3.select("#countryChart")
-  .append("svg")
-  .attr(
-    "viewBox",
-    "0 0 900 450"
-  )
-  .append("g")
-  .attr(
-    "transform",
-    `translate(${margin.left},${margin.top})`
-  );
+      .slice(0, 10);
 
-// TOP 10 COUNTRY
+    const x = d3
+      .scaleBand()
 
-const countryData =
+      .domain(countryData.map((d) => d[0]))
 
-d3.rollups(
+      .range([0, width])
 
-    data,
+      .padding(0.2);
 
-    v => v.length,
+    const y = d3
+      .scaleLinear()
 
-    d => d.country
+      .domain([0, d3.max(countryData, (d) => d[1])])
 
-)
+      .nice()
 
-.sort(
-    (a,b) =>
-    b[1] - a[1]
-)
+      .range([height, 0]);
 
-.slice(0,10);
+    // X AXIS
 
-const x =
+    svg
+      .append("g")
 
-d3.scaleBand()
+      .attr("transform", `translate(0,${height})`)
 
-  .domain(
+      .call(d3.axisBottom(x))
 
-    countryData.map(
-        d => d[0]
-    )
+      .selectAll("text")
 
-  )
+      .attr("transform", "rotate(-30)")
 
-  .range([0,width])
+      .style("text-anchor", "end");
 
-  .padding(0.2);
+    // Y AXIS
 
-const y =
+    svg
+      .append("g")
 
-d3.scaleLinear()
+      .call(d3.axisLeft(y));
 
-  .domain([
+    // BAR
 
-    0,
+    svg
+      .selectAll("rect")
 
-    d3.max(
-        countryData,
-        d => d[1]
-    )
+      .data(countryData)
 
-  ])
+      .enter()
 
-  .nice()
+      .append("rect")
 
-  .range([height,0]);
+      .attr("x", (d) => x(d[0]))
 
-// X AXIS
+      .attr("y", (d) => y(d[1]))
 
-svg.append("g")
+      .attr("width", x.bandwidth())
 
-   .attr(
-    "transform",
-    `translate(0,${height})`
-   )
+      .attr("height", (d) => height - y(d[1]))
 
-   .call(
-    d3.axisBottom(x)
-   )
+      .attr("fill", "#2563eb")
 
-   .selectAll("text")
+      .attr("rx", 5)
 
-   .attr(
-    "transform",
-    "rotate(-30)"
-   )
-
-   .style(
-    "text-anchor",
-    "end"
-   );
-
-// Y AXIS
-
-svg.append("g")
-
-   .call(
-    d3.axisLeft(y)
-   );
-
-// BAR
-
-svg.selectAll("rect")
-
-   .data(countryData)
-
-   .enter()
-
-   .append("rect")
-
-   .attr(
-    "x",
-    d => x(d[0])
-   )
-
-   .attr(
-    "y",
-    d => y(d[1])
-   )
-
-   .attr(
-    "width",
-    x.bandwidth()
-   )
-
-   .attr(
-    "height",
-    d => height - y(d[1])
-   )
-
-   .attr(
-    "fill",
-    "#2563eb"
-   )
-
-   .attr(
-    "rx",
-    5
-   )
-
-   .on(
-    "mouseover",
-    function(event,d){
-
+      .on("mouseover", function (event, d) {
         tooltip
 
-        .style(
-            "opacity",
-            1
-        )
+          .style("opacity", 1)
 
-        .html(`
+          .html(
+            `
 
             <b>${d[0]}</b>
             <br>
             Bookings:
             ${d[1]}
 
-        `)
+        `,
+          )
 
-        .style(
-            "left",
-            event.pageX + 15 + "px"
-        )
+          .style("left", event.pageX + 15 + "px")
 
-        .style(
-            "top",
-            event.pageY - 20 + "px"
-        );
+          .style("top", event.pageY - 20 + "px");
+      })
 
-    }
-   )
+      .on("mouseout", () => {
+        tooltip.style("opacity", 0);
+      });
 
-   .on(
-    "mouseout",
-    () => {
+    // VALUE LABEL
 
-        tooltip
-        .style(
-            "opacity",
-            0
-        );
+    svg
+      .selectAll(".value")
 
-    }
-   );
+      .data(countryData)
 
-// VALUE LABEL
+      .enter()
 
-svg.selectAll(".value")
+      .append("text")
 
-   .data(countryData)
+      .attr("x", (d) => x(d[0]) + x.bandwidth() / 2)
 
-   .enter()
+      .attr("y", (d) => y(d[1]) - 8)
 
-   .append("text")
+      .attr("text-anchor", "middle")
 
-   .attr(
-    "x",
-    d =>
-    x(d[0]) +
-    x.bandwidth()/2
-   )
+      .style("font-size", "11px")
 
-   .attr(
-    "y",
-    d =>
-    y(d[1]) - 8
-   )
+      .style("font-weight", "600")
 
-   .attr(
-    "text-anchor",
-    "middle"
-   )
+      .text((d) => d[1]);
 
-   .style(
-    "font-size",
-    "11px"
-   )
+    // TITLE
 
-   .style(
-    "font-weight",
-    "600"
-   )
+    svg
+      .append("text")
 
-   .text(
-    d => d[1]
-   );
+      .attr("x", width / 2)
 
-// TITLE
+      .attr("y", -15)
 
-svg.append("text")
+      .attr("text-anchor", "middle")
 
-   .attr(
-    "x",
-    width / 2
-   )
+      .style("font-size", "18px")
 
-   .attr(
-    "y",
-    -15
-   )
+      .style("font-weight", "bold")
 
-   .attr(
-    "text-anchor",
-    "middle"
-   )
-
-   .style(
-    "font-size",
-    "18px"
-   )
-
-   .style(
-    "font-weight",
-    "bold"
-   )
-
-   .text(
-    "Top 10 Guest Countries"
-   );
-
-}
-
+      .text("Top 10 Guest Countries");
+  }
 }
 
 // =====================================
 // MARKET SEGMENT ANALYSIS
 // =====================================
 
-function drawMarketChart(data){
+function drawMarketChart(data) {
+  d3.select("#marketChart").html("");
 
-    d3.select("#marketChart").html("");
+  const segments = [
+    "Aviation",
+    "Complementary",
+    "Corporate",
+    "Direct",
+    "Groups",
+    "Offline TA/TO",
+    "Online TA",
+  ];
 
-    const segments = [
-        "Aviation",
-        "Complementary",
-        "Corporate",
-        "Direct",
-        "Groups",
-        "Offline TA/TO",
-        "Online TA"
-    ];
+  const chartData = segments.map((segment) => {
+    const column = `market_segment_${segment}`;
 
-    const chartData = segments.map(segment => {
+    const segmentRows = data.filter(
+      (d) => String(d[column]).toLowerCase() === "true",
+    );
 
-        const column = `market_segment_${segment}`;
+    const canceled = segmentRows.filter((d) => d.is_canceled == 1).length;
 
-        const segmentRows = data.filter(
-            d => String(d[column]).toLowerCase() === "true"
-        );
+    const notCanceled = segmentRows.filter((d) => d.is_canceled == 0).length;
 
-        const canceled = segmentRows.filter(
-            d => d.is_canceled == 1
-        ).length;
-
-        const notCanceled = segmentRows.filter(
-            d => d.is_canceled == 0
-        ).length;
-
-        return {
-            segment,
-            canceled,
-            notCanceled,
-            total: canceled + notCanceled
-        };
-
-    });
-
-    const margin = {
-        top: 20,
-        right: 80,
-        bottom: 50,
-        left: 150
+    return {
+      segment,
+      canceled,
+      notCanceled,
+      total: canceled + notCanceled,
     };
+  });
 
-    const width = 800 - margin.left - margin.right;
-    const height = 450 - margin.top - margin.bottom;
+  const margin = {
+    top: 20,
+    right: 80,
+    bottom: 50,
+    left: 150,
+  };
 
-    const svg = d3.select("#marketChart")
-        .append("svg")
-        .attr("viewBox", "0 0 800 450")
-        .append("g")
-        .attr(
-            "transform",
-            `translate(${margin.left},${margin.top})`
-        );
+  const width = 800 - margin.left - margin.right;
+  const height = 450 - margin.top - margin.bottom;
 
-    const x = d3.scaleLinear()
-        .domain([
-            0,
-            d3.max(chartData, d => d.total)
-        ])
-        .nice()
-        .range([0, width]);
+  const svg = d3
+    .select("#marketChart")
+    .append("svg")
+    .attr("viewBox", "0 0 800 450")
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    const y = d3.scaleBand()
-        .domain(chartData.map(d => d.segment))
-        .range([0, height])
-        .padding(0.2);
+  const x = d3
+    .scaleLinear()
+    .domain([0, d3.max(chartData, (d) => d.total)])
+    .nice()
+    .range([0, width]);
 
-    // Axis
+  const y = d3
+    .scaleBand()
+    .domain(chartData.map((d) => d.segment))
+    .range([0, height])
+    .padding(0.2);
 
-    svg.append("g")
-        .call(d3.axisLeft(y));
+  // Axis
 
-    svg.append("g")
-        .attr(
-            "transform",
-            `translate(0,${height})`
+  svg.append("g").call(d3.axisLeft(y));
+
+  svg
+    .append("g")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x));
+
+  // Not Canceled (Biru)
+
+  svg
+    .selectAll(".notCanceled")
+    .data(chartData)
+    .enter()
+    .append("rect")
+    .attr("x", 0)
+    .attr("y", (d) => y(d.segment))
+    .attr("height", y.bandwidth())
+    .attr("width", (d) => x(d.notCanceled))
+    .attr("fill", "#2563eb")
+    .on("mouseover", function (event, d) {
+      tooltip
+        .style("opacity", 1)
+        .html(
+          `
+                    <b>${d.segment}</b><br>
+                    Not Canceled: ${d.notCanceled}<br>
+                    Canceled: ${d.canceled}<br>
+                    Total: ${d.total}
+                `,
         )
-        .call(d3.axisBottom(x));
+        .style("left", event.pageX + 15 + "px")
+        .style("top", event.pageY - 20 + "px");
+    })
+    .on("mouseout", () => tooltip.style("opacity", 0));
 
-    // Not Canceled (Biru)
+  // Canceled (Oranye)
 
-    svg.selectAll(".notCanceled")
-        .data(chartData)
-        .enter()
-        .append("rect")
-        .attr("x", 0)
-        .attr("y", d => y(d.segment))
-        .attr("height", y.bandwidth())
-        .attr("width", d => x(d.notCanceled))
-        .attr("fill", "#2563eb")
-        .on("mouseover", function(event, d){
-
-            tooltip
-                .style("opacity", 1)
-                .html(`
+  svg
+    .selectAll(".canceled")
+    .data(chartData)
+    .enter()
+    .append("rect")
+    .attr("x", (d) => x(d.notCanceled))
+    .attr("y", (d) => y(d.segment))
+    .attr("height", y.bandwidth())
+    .attr("width", (d) => x(d.canceled))
+    .attr("fill", "#f97316")
+    .on("mouseover", function (event, d) {
+      tooltip
+        .style("opacity", 1)
+        .html(
+          `
                     <b>${d.segment}</b><br>
                     Not Canceled: ${d.notCanceled}<br>
                     Canceled: ${d.canceled}<br>
                     Total: ${d.total}
-                `)
-                .style("left", event.pageX + 15 + "px")
-                .style("top", event.pageY - 20 + "px");
+                `,
+        )
+        .style("left", event.pageX + 15 + "px")
+        .style("top", event.pageY - 20 + "px");
+    })
+    .on("mouseout", () => tooltip.style("opacity", 0));
 
-        })
-        .on("mouseout", () =>
-            tooltip.style("opacity", 0)
-        );
+  // Label Total
 
-    // Canceled (Oranye)
-
-    svg.selectAll(".canceled")
-        .data(chartData)
-        .enter()
-        .append("rect")
-        .attr("x", d => x(d.notCanceled))
-        .attr("y", d => y(d.segment))
-        .attr("height", y.bandwidth())
-        .attr("width", d => x(d.canceled))
-        .attr("fill", "#f97316")
-        .on("mouseover", function(event, d){
-
-            tooltip
-                .style("opacity", 1)
-                .html(`
-                    <b>${d.segment}</b><br>
-                    Not Canceled: ${d.notCanceled}<br>
-                    Canceled: ${d.canceled}<br>
-                    Total: ${d.total}
-                `)
-                .style("left", event.pageX + 15 + "px")
-                .style("top", event.pageY - 20 + "px");
-
-        })
-        .on("mouseout", () =>
-            tooltip.style("opacity", 0)
-        );
-
-    // Label Total
-
-    svg.selectAll(".totalLabel")
-        .data(chartData)
-        .enter()
-        .append("text")
-        .attr("x", d => x(d.total) + 5)
-        .attr("y", d => y(d.segment) + y.bandwidth()/2 + 4)
-        .style("font-size", "11px")
-        .style("font-weight", "600")
-        .text(d => d.total);
-
+  svg
+    .selectAll(".totalLabel")
+    .data(chartData)
+    .enter()
+    .append("text")
+    .attr("x", (d) => x(d.total) + 5)
+    .attr("y", (d) => y(d.segment) + y.bandwidth() / 2 + 4)
+    .style("font-size", "11px")
+    .style("font-weight", "600")
+    .text((d) => d.total);
 }
 
 // =====================================
 // ADR vs LEAD TIME SCATTER PLOT
 // =====================================
 
-function drawScatterPlot(data){
+function drawScatterPlot(data) {
+  d3.select("#scatterChart").html("");
 
-    d3.select("#scatterChart").html("");
+  if (data.length === 0) {
+    d3.select("#scatterChart")
+      .append("p")
+      .style("text-align", "center")
+      .style("padding", "50px")
+      .text("No data available");
 
-    if(data.length === 0){
+    return;
+  }
 
-        d3.select("#scatterChart")
-            .append("p")
-            .style("text-align","center")
-            .style("padding","50px")
-            .text("No data available");
+  const margin = {
+    top: 20,
+    right: 20,
+    bottom: 60,
+    left: 70,
+  };
 
-        return;
-    }
+  const width = 1000 - margin.left - margin.right;
 
-    const margin = {
-        top: 20,
-        right: 20,
-        bottom: 60,
-        left: 70
-    };
+  const height = 520 - margin.top - margin.bottom;
 
-    const width =
-        1000 -
-        margin.left -
-        margin.right;
+  const svg = d3
+    .select("#scatterChart")
+    .append("svg")
+    .attr("viewBox", "0 0 1000 520")
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    const height =
-        520 -
-        margin.top -
-        margin.bottom;
+  // Debug jumlah hotel
+  console.log(
+    "Hotel Distribution:",
+    d3.rollup(
+      data,
+      (v) => v.length,
+      (d) => d.hotel,
+    ),
+  );
 
-    const svg = d3.select("#scatterChart")
-        .append("svg")
-        .attr("viewBox","0 0 1000 520")
-        .append("g")
-        .attr(
-            "transform",
-            `translate(${margin.left},${margin.top})`
-        );
+  // X Scale
+  const x = d3
+    .scaleLinear()
+    .domain([0, d3.max(data, (d) => d.lead_time)])
+    .nice()
+    .range([0, width]);
 
-    // Debug jumlah hotel
-    console.log(
-        "Hotel Distribution:",
-        d3.rollup(
-            data,
-            v => v.length,
-            d => d.hotel
-        )
-    );
+  // Y Scale
+  const y = d3
+    .scaleLinear()
+    .domain([0, d3.max(data, (d) => d.adr)])
+    .nice()
+    .range([height, 0]);
 
-    // X Scale
-    const x = d3.scaleLinear()
-        .domain([
-            0,
-            d3.max(
-                data,
-                d => d.lead_time
-            )
-        ])
-        .nice()
-        .range([0,width]);
+  // X Axis
+  svg
+    .append("g")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x));
 
-    // Y Scale
-    const y = d3.scaleLinear()
-        .domain([
-            0,
-            d3.max(
-                data,
-                d => d.adr
-            )
-        ])
-        .nice()
-        .range([height,0]);
+  // Y Axis
+  svg.append("g").call(d3.axisLeft(y));
 
-    // X Axis
-    svg.append("g")
-        .attr(
-            "transform",
-            `translate(0,${height})`
-        )
-        .call(
-            d3.axisBottom(x)
-        );
+  // X Label
+  svg
+    .append("text")
+    .attr("x", width / 2)
+    .attr("y", height + 45)
+    .attr("text-anchor", "middle")
+    .style("font-size", "14px")
+    .style("font-weight", "600")
+    .text("Lead Time");
 
-    // Y Axis
-    svg.append("g")
-        .call(
-            d3.axisLeft(y)
-        );
+  // Y Label
+  svg
+    .append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -height / 2)
+    .attr("y", -50)
+    .attr("text-anchor", "middle")
+    .style("font-size", "14px")
+    .style("font-weight", "600")
+    .text("ADR");
 
-    // X Label
-    svg.append("text")
-        .attr(
-            "x",
-            width / 2
-        )
-        .attr(
-            "y",
-            height + 45
-        )
-        .attr(
-            "text-anchor",
-            "middle"
-        )
-        .style(
-            "font-size",
-            "14px"
-        )
-        .style(
-            "font-weight",
-            "600"
-        )
-        .text("Lead Time");
+  // =====================
+  // POINTS
+  // =====================
 
-    // Y Label
-    svg.append("text")
-        .attr(
-            "transform",
-            "rotate(-90)"
-        )
-        .attr(
-            "x",
-            -height / 2
-        )
-        .attr(
-            "y",
-            -50
-        )
-        .attr(
-            "text-anchor",
-            "middle"
-        )
-        .style(
-            "font-size",
-            "14px"
-        )
-        .style(
-            "font-weight",
-            "600"
-        )
-        .text("ADR");
+  svg
+    .selectAll(".point")
+    .data(data)
+    .enter()
+    .append("path")
+    .attr("class", "point")
 
-    // =====================
-    // POINTS
-    // =====================
-
-    svg.selectAll(".point")
-        .data(data)
-        .enter()
-        .append("path")
-        .attr("class","point")
-
-        .attr(
-            "transform",
-            d =>
-            `translate(
+    .attr(
+      "transform",
+      (d) =>
+        `translate(
                 ${x(d.lead_time)},
                 ${y(d.adr)}
-            )`
-        )
+            )`,
+    )
 
-        .attr("d", d => {
+    .attr("d", (d) => {
+      const hotel = String(d.hotel).trim();
 
-            const hotel =
-                String(d.hotel).trim();
+      // Resort Hotel = Kotak
+      if (hotel === "Resort Hotel") {
+        return d3.symbol().type(d3.symbolSquare).size(25)();
+      }
 
-            // Resort Hotel = Kotak
-            if(
-                hotel ===
-                "Resort Hotel"
-            ){
+      // City Hotel = Lingkaran
+      return d3.symbol().type(d3.symbolCircle).size(25)();
+    })
 
-                return d3.symbol()
-                    .type(
-                        d3.symbolSquare
-                    )
-                    .size(25)();
+    .attr("fill", (d) => (d.is_canceled === 1 ? "#ef4444" : "#2563eb"))
 
-            }
+    .attr("opacity", 0.45)
 
-            // City Hotel = Lingkaran
-            return d3.symbol()
-                .type(
-                    d3.symbolCircle
-                )
-                .size(25)();
-
-        })
-
-        .attr(
-            "fill",
-            d =>
-            d.is_canceled === 1
-            ? "#ef4444"
-            : "#2563eb"
-        )
-
-        .attr(
-            "opacity",
-            0.45
-        )
-
-        .on(
-            "mouseover",
-            function(event,d){
-
-                tooltip
-                    .style(
-                        "opacity",
-                        1
-                    )
-                    .html(`
+    .on("mouseover", function (event, d) {
+      tooltip
+        .style("opacity", 1)
+        .html(
+          `
                         <b>${d.hotel}</b><br>
                         Lead Time:
                         ${d.lead_time.toFixed(2)}<br>
                         ADR:
                         ${d.adr.toFixed(2)}<br>
                         Status:
-                        ${
-                            d.is_canceled === 1
-                            ? "Canceled"
-                            : "Successful"
-                        }
-                    `)
-
-                    .style(
-                        "left",
-                        event.pageX + 15 + "px"
-                    )
-
-                    .style(
-                        "top",
-                        event.pageY - 20 + "px"
-                    );
-
-            }
+                        ${d.is_canceled === 1 ? "Canceled" : "Successful"}
+                    `,
         )
 
-        .on(
-            "mouseout",
-            () => {
+        .style("left", event.pageX + 15 + "px")
 
-                tooltip
-                    .style(
-                        "opacity",
-                        0
-                    );
+        .style("top", event.pageY - 20 + "px");
+    })
 
-            }
-        );
-
+    .on("mouseout", () => {
+      tooltip.style("opacity", 0);
+    });
 }
 
-function updateInsights(data){
+function updateInsights(data) {
+  if (data.length === 0) {
+    d3.select("#insights").html("<p>No data available.</p>");
 
-    if(data.length === 0){
+    return;
+  }
 
-        d3.select("#insights")
-            .html("<p>No data available.</p>");
+  // Total booking
+  const totalBookings = data.length;
 
-        return;
-    }
+  // Cancellation rate
+  const canceled = data.filter((d) => d.is_canceled === 1).length;
 
-    // Total booking
-    const totalBookings = data.length;
+  const cancelRate = ((canceled / totalBookings) * 100).toFixed(1);
 
-    // Cancellation rate
-    const canceled =
-        data.filter(d => d.is_canceled === 1).length;
+  // Average ADR
+  const avgADR = d3.mean(data, (d) => d.adr).toFixed(2);
 
-    const cancelRate =
-        ((canceled / totalBookings) * 100).toFixed(1);
+  // Average Lead Time
+  const avgLead = d3.mean(data, (d) => d.lead_time).toFixed(2);
 
-    // Average ADR
-    const avgADR =
-        d3.mean(data,d => d.adr).toFixed(2);
+  // Top Country
+  const topCountry = d3
+    .rollups(
+      data,
+      (v) => v.length,
+      (d) => d.country,
+    )
+    .sort((a, b) => b[1] - a[1])[0];
 
-    // Average Lead Time
-    const avgLead =
-        d3.mean(data,d => d.lead_time).toFixed(2);
+  // Hotel Type Dominan
+  const topHotel = d3
+    .rollups(
+      data,
+      (v) => v.length,
+      (d) => d.hotel,
+    )
+    .sort((a, b) => b[1] - a[1])[0];
 
-    // Top Country
-    const topCountry =
-        d3.rollups(
-            data,
-            v => v.length,
-            d => d.country
-        )
-        .sort((a,b) => b[1]-a[1])[0];
-
-    // Hotel Type Dominan
-    const topHotel =
-        d3.rollups(
-            data,
-            v => v.length,
-            d => d.hotel
-        )
-        .sort((a,b) => b[1]-a[1])[0];
-
-    d3.select("#insights").html(`
+  d3.select("#insights").html(`
         <h3>Dashboard Insights</h3>
         <ul>
             <li>
@@ -1404,5 +918,4 @@ function updateInsights(data){
             </li>
         </ul>
     `);
-
 }
