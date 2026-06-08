@@ -1,0 +1,341 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Segoe UI',sans-serif;
+    background:#f4f7fc;
+    color:#1e293b;
+    display:flex;
+    min-height:100vh;
+}
+
+/* =========================
+SIDEBAR
+========================= */
+
+.sidebar{
+    width:280px;
+    background:#ffffff;
+    padding:25px;
+    border-right:1px solid #e2e8f0;
+    position:fixed;
+    top:0;
+    left:0;
+    bottom:0;
+    overflow-y:auto;
+}
+
+.logo{
+    margin-bottom:30px;
+    text-align:center;
+}
+
+.logo h2{
+    color:#2563eb;
+    font-size:24px;
+}
+
+/* =========================
+FILTER
+========================= */
+
+.filter-group{
+    margin-bottom:20px;
+}
+
+.filter-group label{
+    display:block;
+    margin-bottom:8px;
+    font-weight:600;
+    color:#334155;
+}
+
+.filter-group select{
+    width:100%;
+    padding:10px;
+    border:1px solid #cbd5e1;
+    border-radius:10px;
+    background:white;
+    font-size:14px;
+    cursor:pointer;
+}
+
+.filter-group select:focus{
+    outline:none;
+    border-color:#2563eb;
+}
+
+#resetBtn{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:#2563eb;
+    color:white;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+#resetBtn:hover{
+    background:#1d4ed8;
+}
+
+/* =========================
+MAIN
+========================= */
+
+main{
+    margin-left:280px;
+    width:calc(100% - 280px);
+    padding:25px;
+}
+
+/* =========================
+HEADER
+========================= */
+
+header{
+    margin-bottom:25px;
+}
+
+header h1{
+    font-size:34px;
+    margin-bottom:5px;
+}
+
+header p{
+    color:#64748b;
+}
+
+/* =========================
+KPI
+========================= */
+
+.kpi-container{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+    margin-bottom:25px;
+}
+
+.kpi-card{
+    background:white;
+    padding:25px;
+    border-radius:18px;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+    transition:.3s;
+}
+
+.kpi-card:hover{
+    transform:translateY(-3px);
+}
+
+.kpi-card h3{
+    color:#64748b;
+    margin-bottom:10px;
+    font-size:15px;
+}
+
+.kpi-card span{
+    font-size:28px;
+    font-weight:700;
+    color:#2563eb;
+}
+
+/* =========================
+ROWS
+========================= */
+
+.row{
+    margin-bottom:25px;
+}
+
+.row-2{
+    display:grid;
+    grid-template-columns:1.2fr 0.8fr;
+    gap:20px;
+}
+
+/* =========================
+CHART CARD
+========================= */
+
+.chart-card{
+    background:white;
+    border-radius:18px;
+    padding:20px;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+
+.chart-card h2{
+    margin-bottom:15px;
+    font-size:18px;
+}
+
+/* =========================
+CHART AREA
+========================= */
+
+#lineChart{
+    width:100%;
+    height:450px;
+}
+
+#countryChart{
+    width:100%;
+    height:450px;
+}
+
+#marketChart{
+    width:100%;
+    height:520px;
+}
+
+#scatterChart{
+    width:100%;
+    height:520px;
+}
+
+svg{
+    width:100%;
+    height:100%;
+}
+
+/* =========================
+TOOLTIP
+========================= */
+
+#tooltip{
+    position:absolute;
+    background:white;
+    padding:12px 16px;
+    border-radius:10px;
+    box-shadow:0 4px 15px rgba(0,0,0,.15);
+    pointer-events:none;
+    opacity:0;
+    z-index:9999;
+    font-size:14px;
+    line-height:1.6;
+}
+
+/* =========================
+LEGEND
+========================= */
+
+.legend{
+    display:flex;
+    gap:20px;
+    margin-top:15px;
+    flex-wrap:wrap;
+}
+
+.legend-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:14px;
+}
+
+.legend-box{
+    width:14px;
+    height:14px;
+    border-radius:4px;
+}
+
+/* =========================
+COLORS
+========================= */
+
+.booking{
+    background:#2563eb;
+}
+
+.cancel{
+    background:#ef4444;
+}
+
+.segment{
+    background:#f97316;
+}
+
+/* =========================
+INSIGHT BOX
+========================= */
+
+.insight-box{
+    background:white;
+    border-radius:18px;
+    padding:25px;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+    border-left:6px solid #2563eb;
+}
+
+.insight-box h3{
+    margin-bottom:15px;
+    color:#1e293b;
+}
+
+.insight-box ul{
+    padding-left:20px;
+}
+
+.insight-box li{
+    margin-bottom:10px;
+    line-height:1.6;
+}
+
+/* =========================
+FOOTER
+========================= */
+
+footer{
+    text-align:center;
+    margin-top:20px;
+    color:#64748b;
+    font-size:14px;
+    padding:15px;
+}
+
+/* =========================
+RESPONSIVE
+========================= */
+
+@media(max-width:1200px){
+
+    .kpi-container{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .row-2{
+        grid-template-columns:1fr;
+    }
+
+}
+
+@media(max-width:768px){
+
+    body{
+        flex-direction:column;
+    }
+
+    .sidebar{
+        width:100%;
+        position:relative;
+        border-right:none;
+        border-bottom:1px solid #e2e8f0;
+    }
+
+    main{
+        width:100%;
+        margin-left:0;
+    }
+
+    .kpi-container{
+        grid-template-columns:1fr;
+    }
+
+}
