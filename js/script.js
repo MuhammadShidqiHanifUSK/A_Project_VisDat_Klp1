@@ -379,117 +379,118 @@ function drawLineChart(data) {
     .on("mouseout", () => {
       tooltip.style("opacity", 0);
     });
+}
 
-  // =====================================
-  // TOP 10 GUEST COUNTRIES
-  // =====================================
+// =====================================
+// TOP 10 GUEST COUNTRIES
+// =====================================
 
-  function drawCountryChart(data) {
-    d3.select("#countryChart").html("");
+function drawCountryChart(data) {
+  d3.select("#countryChart").html("");
 
-    const margin = {
-      top: 40,
-      right: 30,
-      bottom: 80,
-      left: 70,
-    };
+  const margin = {
+    top: 40,
+    right: 30,
+    bottom: 80,
+    left: 70,
+  };
 
-    const width = 900 - margin.left - margin.right;
+  const width = 900 - margin.left - margin.right;
 
-    const height = 450 - margin.top - margin.bottom;
+  const height = 450 - margin.top - margin.bottom;
 
-    const svg = d3
-      .select("#countryChart")
-      .append("svg")
-      .attr("viewBox", "0 0 900 450")
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+  const svg = d3
+    .select("#countryChart")
+    .append("svg")
+    .attr("viewBox", "0 0 900 450")
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // TOP 10 COUNTRY
+  // TOP 10 COUNTRY
 
-    const countryData = d3
-      .rollups(
-        data,
+  const countryData = d3
+    .rollups(
+      data,
 
-        (v) => v.length,
+      (v) => v.length,
 
-        (d) => d.country,
-      )
+      (d) => d.country,
+    )
 
-      .sort((a, b) => b[1] - a[1])
+    .sort((a, b) => b[1] - a[1])
 
-      .slice(0, 10);
+    .slice(0, 10);
 
-    const x = d3
-      .scaleBand()
+  const x = d3
+    .scaleBand()
 
-      .domain(countryData.map((d) => d[0]))
+    .domain(countryData.map((d) => d[0]))
 
-      .range([0, width])
+    .range([0, width])
 
-      .padding(0.2);
+    .padding(0.2);
 
-    const y = d3
-      .scaleLinear()
+  const y = d3
+    .scaleLinear()
 
-      .domain([0, d3.max(countryData, (d) => d[1])])
+    .domain([0, d3.max(countryData, (d) => d[1])])
 
-      .nice()
+    .nice()
 
-      .range([height, 0]);
+    .range([height, 0]);
 
-    // X AXIS
+  // X AXIS
 
-    svg
-      .append("g")
+  svg
+    .append("g")
 
-      .attr("transform", `translate(0,${height})`)
+    .attr("transform", `translate(0,${height})`)
 
-      .call(d3.axisBottom(x))
+    .call(d3.axisBottom(x))
 
-      .selectAll("text")
+    .selectAll("text")
 
-      .attr("transform", "rotate(-30)")
+    .attr("transform", "rotate(-30)")
 
-      .style("text-anchor", "end");
+    .style("text-anchor", "end");
 
-    // Y AXIS
+  // Y AXIS
 
-    svg
-      .append("g")
+  svg
+    .append("g")
 
-      .call(d3.axisLeft(y));
+    .call(d3.axisLeft(y));
 
-    // BAR
+  // BAR
 
-    svg
-      .selectAll("rect")
+  svg
+    .selectAll("rect")
 
-      .data(countryData)
+    .data(countryData)
 
-      .enter()
+    .enter()
 
-      .append("rect")
+    .append("rect")
 
-      .attr("x", (d) => x(d[0]))
+    .attr("x", (d) => x(d[0]))
 
-      .attr("y", (d) => y(d[1]))
+    .attr("y", (d) => y(d[1]))
 
-      .attr("width", x.bandwidth())
+    .attr("width", x.bandwidth())
 
-      .attr("height", (d) => height - y(d[1]))
+    .attr("height", (d) => height - y(d[1]))
 
-      .attr("fill", "#2563eb")
+    .attr("fill", "#2563eb")
 
-      .attr("rx", 5)
+    .attr("rx", 5)
 
-      .on("mouseover", function (event, d) {
-        tooltip
+    .on("mouseover", function (event, d) {
+      tooltip
 
-          .style("opacity", 1)
+        .style("opacity", 1)
 
-          .html(
-            `
+        .html(
+          `
 
             <b>${d[0]}</b>
             <br>
@@ -497,57 +498,56 @@ function drawLineChart(data) {
             ${d[1]}
 
         `,
-          )
+        )
 
-          .style("left", event.pageX + 15 + "px")
+        .style("left", event.pageX + 15 + "px")
 
-          .style("top", event.pageY - 20 + "px");
-      })
+        .style("top", event.pageY - 20 + "px");
+    })
 
-      .on("mouseout", () => {
-        tooltip.style("opacity", 0);
-      });
+    .on("mouseout", () => {
+      tooltip.style("opacity", 0);
+    });
 
-    // VALUE LABEL
+  // VALUE LABEL
 
-    svg
-      .selectAll(".value")
+  svg
+    .selectAll(".value")
 
-      .data(countryData)
+    .data(countryData)
 
-      .enter()
+    .enter()
 
-      .append("text")
+    .append("text")
 
-      .attr("x", (d) => x(d[0]) + x.bandwidth() / 2)
+    .attr("x", (d) => x(d[0]) + x.bandwidth() / 2)
 
-      .attr("y", (d) => y(d[1]) - 8)
+    .attr("y", (d) => y(d[1]) - 8)
 
-      .attr("text-anchor", "middle")
+    .attr("text-anchor", "middle")
 
-      .style("font-size", "11px")
+    .style("font-size", "11px")
 
-      .style("font-weight", "600")
+    .style("font-weight", "600")
 
-      .text((d) => d[1]);
+    .text((d) => d[1]);
 
-    // TITLE
+  // TITLE
 
-    svg
-      .append("text")
+  svg
+    .append("text")
 
-      .attr("x", width / 2)
+    .attr("x", width / 2)
 
-      .attr("y", -15)
+    .attr("y", -15)
 
-      .attr("text-anchor", "middle")
+    .attr("text-anchor", "middle")
 
-      .style("font-size", "18px")
+    .style("font-size", "18px")
 
-      .style("font-weight", "bold")
+    .style("font-weight", "bold")
 
-      .text("Top 10 Guest Countries");
-  }
+    .text("Top 10 Guest Countries");
 }
 
 // =====================================
