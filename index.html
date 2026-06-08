@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Hotel Booking Analytics Dashboard</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+<!-- =========================
+SIDEBAR
+========================= -->
+
+<aside class="sidebar">
+
+    <div class="logo">
+
+        <h2>Hotel Dashboard</h2>
+
+    </div>
+
+    <!-- HOTEL -->
+
+    <div class="filter-group">
+
+        <label>Hotel Type</label>
+
+        <select id="hotelFilter">
+
+            <option value="All">All Hotels</option>
+
+            <option value="City Hotel">
+                City Hotel
+            </option>
+
+            <option value="Resort Hotel">
+                Resort Hotel
+            </option>
+
+        </select>
+
+    </div>
+
+    <!-- YEAR -->
+
+    <div class="filter-group">
+
+        <label>Year</label>
+
+        <select id="yearFilter">
+
+            <option value="All">All Years</option>
+
+            <option value="2015">2015</option>
+
+            <option value="2016">2016</option>
+
+            <option value="2017">2017</option>
+
+        </select>
+
+    </div>
+
+    <!-- STATUS -->
+
+    <div class="filter-group">
+
+        <label>Reservation Status</label>
+
+        <select id="statusFilter">
+
+            <option value="All">
+                All Status
+            </option>
+
+            <option value="Canceled">
+                Canceled
+            </option>
+
+            <option value="Check-Out">
+                Check-Out
+            </option>
+
+        </select>
+
+    </div>
+
+    <!-- MARKET SEGMENT -->
+
+    <div class="filter-group">
+
+        <label>Market Segment</label>
+
+        <select id="segmentFilter">
+
+            <option value="All">
+                All Segments
+            </option>
+
+            <option value="Online TA">
+                Online TA
+            </option>
+
+            <option value="Offline TA/TO">
+                Offline TA/TO
+            </option>
+
+            <option value="Direct">
+                Direct
+            </option>
+
+            <option value="Groups">
+                Groups
+            </option>
+
+            <option value="Corporate">
+                Corporate
+            </option>
+
+            <option value="Complementary">
+                Complementary
+            </option>
+
+            <option value="Aviation">
+                Aviation
+            </option>
+
+        </select>
+
+    </div>
+
+    <!-- DEPOSIT -->
+
+    <div class="filter-group">
+
+        <label>Deposit Type</label>
+
+        <select id="depositFilter">
+
+            <option value="All">
+                All Deposit Types
+            </option>
+
+            <option value="No Deposit">
+                No Deposit
+            </option>
+
+            <option value="Non Refund">
+                Non Refund
+            </option>
+
+            <option value="Refundable">
+                Refundable
+            </option>
+
+        </select>
+
+    </div>
+
+    <!-- RESET -->
+
+    <button id="resetBtn">
+
+        Reset Filters
+
+    </button>
+
+</aside>
+
+<!-- =========================
+MAIN CONTENT
+========================= -->
+
+<main>
+
+    <!-- HEADER -->
+
+    <header>
+
+        <h1>
+
+            Hotel Booking Demand Dashboard
+
+        </h1>
+
+        <p>
+
+            Interactive Data Visualization using D3.js
+
+        </p>
+
+    </header>
+
+    <!-- KPI -->
+
+    <section class="kpi-container">
+
+        <div class="kpi-card">
+
+            <h3>Total Bookings</h3>
+
+            <span id="totalBookings">
+                0
+            </span>
+
+        </div>
+
+        <div class="kpi-card">
+
+            <h3>Cancellation Rate</h3>
+
+            <span id="cancelRate">
+                0%
+            </span>
+
+        </div>
+
+        <div class="kpi-card">
+
+            <h3>Average ADR (Normalized)</h3>
+
+            <span id="avgADR">
+                0
+            </span>
+
+        </div>
+
+        <div class="kpi-card">
+
+            <h3>Average Lead Time</h3>
+
+            <span id="avgLead">
+                0
+            </span>
+
+        </div>
+
+    </section>
+
+    <!-- =========================
+    LINE CHART
+    ========================= -->
+
+    <section class="row">
+
+        <div class="chart-card">
+
+            <h2>
+
+                Booking & Cancellation Trend
+
+            </h2>
+
+            <div id="lineChart"></div>
+
+            <div class="legend">
+
+                <div class="legend-item">
+
+                    <span class="legend-box booking"></span>
+
+                    Total Bookings
+
+                </div>
+
+                <div class="legend-item">
+
+                    <span class="legend-box cancel"></span>
+
+                    Cancelled Bookings
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =========================
+    COUNTRY + MARKET
+    ========================= -->
+
+    <section class="row row-2">
+
+        <!-- COUNTRY -->
+
+        <div class="chart-card">
+
+            <h2>
+
+                Top 10 Guest Countries
+
+            </h2>
+
+            <div id="countryChart"></div>
+
+            <div class="legend">
+
+                <div class="legend-item">
+
+                    <span class="legend-box booking"></span>
+
+                    Number of Bookings
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- MARKET -->
+
+        <div class="chart-card">
+
+            <h2>
+
+                Market Segment vs Cancellation
+
+            </h2>
+
+            <div id="marketChart"></div>
+
+            <div class="legend">
+
+                <div class="legend-item">
+
+                    <span class="legend-box booking"></span>
+
+                    Not Canceled
+
+                </div>
+
+                <div class="legend-item">
+
+                    <span class="legend-box segment"></span>
+
+                    Canceled
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =========================
+    SCATTER PLOT
+    ========================= -->
+
+    <section class="row">
+
+        <div class="chart-card">
+
+            <h2>
+
+                ADR vs Lead Time
+
+            </h2>
+
+            <div id="scatterChart"></div>
+
+            <div class="legend">
+
+                <div class="legend-item">
+
+                    <span class="legend-box booking"></span>
+
+                    Successful Booking
+
+                </div>
+
+                <div class="legend-item">
+
+                    <span class="legend-box cancel"></span>
+
+                    Cancelled Booking
+
+                </div>
+
+                <div class="legend-item">
+
+                    ○ City Hotel
+
+                </div>
+
+                <div class="legend-item">
+
+                    ■ Resort Hotel
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- INSIGHT -->
+
+    <section class="row">
+
+            <div
+                id="insights"
+                class="insight-box">
+            </div>
+
+    </section>
+
+    <!-- FOOTER -->
+
+    <footer>
+
+        Hotel Booking Analytics Dashboard © 2026
+
+    </footer>
+
+</main>
+
+<!-- TOOLTIP -->
+
+<div id="tooltip"></div>
+
+<!-- D3 -->
+
+<script src="js/d3.v7.min.js"></script>
+
+<!-- MAIN -->
+
+<script src="js/script.js"></script>
+
+</body>
+
+</html>
